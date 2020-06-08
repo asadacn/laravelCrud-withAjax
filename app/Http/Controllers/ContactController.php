@@ -38,38 +38,28 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name'    => 'required|string',
-            'contact' => 'required|numeric',
-            'email'   => 'email|nullable',
-            'address' =>'string|nullable'
-        ]);
+            $rules= [
+                'name'    => 'required|string',
+                'contact' => 'required|numeric|unique:contacts',
+                'email'   => 'email|nullable|unique:contacts',
+                'address' =>'string|nullable'
+            ];
+            $validator = Validator::make($request->all(),$rules);
+    
+            // Validate the input and return correct response
+            if ($validator->fails())
+            {
+                return Response::json(array(
+                    'success' => false,
+                    'errors' => $validator->errors()->all()
+    
+                ), 400); // 400 being the HTTP code for an invalid request.
+            }
 
-        // Validate the input and return correct response
-        if ($validator->fails())
-        {
-            return Response::json(array(
-                'success' => false,
-                'errors' => $validator->errors()->all()
+            Contact::Create($request->input()); //Create if not exit or Update 
 
-            ), 400); // 400 being the HTTP code for an invalid request.
-        }
-
-        if ($request->id) { //update contact
-
-        $contact = Contact::find($request->id);
-        $contact->name=$request->name;
-        $contact->contact=$request->contact;
-        $contact->email=$request->email;
-        $contact->address=$request->address;
-        $contact->save();
-
-        return Response::json(array('success' => true), 200);
-        }
-
-        Contact::Create($request->input()); //Create if not exit or Update 
-
-        return Response::json(array('success' => true), 200);
+            return Response::json(array('success' => true), 200);
+       
     }
 
     /**
@@ -132,7 +122,31 @@ class ContactController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $rules= [
+            'name'    => 'required|string',
+            'contact' => 'required|numeric|unique:contacts,contact,'.$id,
+            'email'   => 'email|nullable|unique:contacts,email,'.$id,
+            'address' =>'string|nullable'
+        ];
+        $validator = Validator::make($request->all(),$rules);
+
+        // Validate the input and return correct response
+        if ($validator->fails())
+        {
+            return Response::json(array(
+                'success' => false,
+                'errors' => $validator->errors()->all()
+
+            ), 400); // 400 being the HTTP code for an invalid request.
+        }
+    $contact = Contact::find($request->id);
+    $contact->name=$request->name;
+    $contact->contact=$request->contact;
+    $contact->email=$request->email;
+    $contact->address=$request->address;
+    $contact->save();
+
+    return Response::json(array('success' => true), 200);
     }
 
     /**

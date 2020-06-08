@@ -28,7 +28,7 @@ font-family: Nunito
              </div>
                <div class="card-body">
             <div class="form-row mb-2">
-                <div class="col-auto mb-2"> <a class="btn  btn-primary border" href="#" data-toggle="modal" data-target="#contactFormModal" >CREATE CONTACT</a></div>
+                <div class="col-auto mb-2"> <a id="add" class="btn  btn-primary border" href="#" data-toggle="modal" data-target="#contactFormModal" >CREATE CONTACT</a></div>
                 <div class="col-sm-8"><input class="form-control" type="text" name="search" id="search" placeholder="Search contact..."></div>
             </div>
             <div class="table-responsive border p-2 rounded">
@@ -97,7 +97,8 @@ font-family: Nunito
                   </div>
                   <input id="cid" type="hidden" name="id">
                   <div class="form-group">
-                    <button type="submit" class="btn btn-primary w-100">Save Contact</button>
+                    <a id="saveBtn"  class="btn btn-primary text-light w-100">Save Contact</a>
+                    <a id="updateBtn"  class="btn btn-primary text-light w-100">Update Contact</a>
                   </div>
               </form>
               <div id="message" class="" style="display: none">
@@ -110,18 +111,60 @@ font-family: Nunito
       </div>
     </div>
   </div>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-//Create or Update CONTACT INFO
-  $('#contactForm').on('submit',function(event) {
+//Create contact
+  $('#saveBtn').on('click',function(event) {
     event.preventDefault();
+
     $.ajaxSetup({headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}});
         $.ajax(
         {
-        url: "{{route('create-or-update')}}",
+        url: "{{route('create')}}",
         type: 'POST', 
         dataType: "JSON",
-        data:$(this).serialize(),
+        data:$('#contactForm').serialize(),
+        success: function (response)
+        {
+
+        if (response.success) {
+          $('#contactFormModal').modal('hide');
+          Swal.fire({
+          title:'Saved!',
+          text:'Contact successfully saved',
+          icon:'success',
+          onClose: () => {
+            document.getElementById("contactForm").reset();
+            location.reload(true);
+        }}
+        );
+        }
+        console.log(response);  
+        },
+        error: function(xhr) {
+          $("#message").html('');
+          $.each(xhr.responseJSON.errors, function (key, item) 
+          {
+            $("#message").append("<li class='alert alert-danger'>"+item+"</li>").show();
+          });
+
+        console.log(xhr.responseText); 
+      }
+      });
+  });
+
+  //Update Contact
+  $('#updateBtn').on('click',function(event) {
+    event.preventDefault();
+    
+    $.ajaxSetup({headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}});
+        $.ajax(
+        {
+        url: "{{url('contact/update')}}"+'/'+$('#cid').val(),
+        type: 'PUT', 
+        dataType: "JSON",
+        data:$('#contactForm').serialize(),
         success: function (response)
         {
 
@@ -153,6 +196,10 @@ font-family: Nunito
 
 //EDIT CONTACT INFO
   function edit(id) { 
+
+    $("#updateBtn").show();
+    $("#saveBtn").hide();
+    $("#message").html('');
     $.ajaxSetup({headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}});
         $.ajax(
         {
@@ -168,9 +215,7 @@ font-family: Nunito
           $('#email').val(contact.email);
           $('#address').val(contact.address);
           $('#contactFormModal').modal('show');
-          $('#contactFormModal').on('hidden.bs.modal', function (e) {
-            document.getElementById("contactForm").reset();
-          })
+        
           console.log(response)
         },
         error: function(xhr){
@@ -239,7 +284,16 @@ font-family: Nunito
 
  })
  });
-
+ //Toggle buttons
+  $('#add').on('click',function(){
+    $("#updateBtn").hide();
+      $("#saveBtn").show();
+  })
+//reset form
+  $('#contactFormModal').on('hidden.bs.modal', function (e) {
+            document.getElementById("contactForm").reset();
+            $("#message").html('');
+          })
 </script>
 
 {{-- Scripts --}}
