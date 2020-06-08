@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::resource('contact', 'ContactController');
+Route::get('/','ContactController@index')->name('home');
+Route::delete('/contact/delete/{id}','ContactController@destroy')->name('delete');
+Route::post('/contact/createOrUpdate/','ContactController@store')->name('create-or-update');
+Route::get('/contact/get/{id}','ContactController@edit')->name('get-contact');
+Route::get('/contact/search','ContactController@show')->name('search');
